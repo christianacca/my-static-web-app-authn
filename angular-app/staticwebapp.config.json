@@ -7,6 +7,24 @@
     {
       "route": "/.auth/login/aad",
       "statusCode": 404
+    },
+    {
+      "route": "/sw.js",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      }
+    },
+    {
+      "route": "/*.js",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "route": "/*.css",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
     }
   ],
   "navigationFallback": {
