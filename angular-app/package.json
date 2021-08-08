@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --proxy-config proxy.conf.json --open",
+    "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "start:swa": "swa start http://localhost:4200 --run \"npm start\" --api http://localhost:7071 --swa-config-location ./dev"
   },
   "private": true,
   "dependencies": {
