@@ -7,11 +7,21 @@
     {
       "route": "/.auth/login/aad",
       "statusCode": 404
+    },
+    {
+      "route": "/login",
+      "rewrite": "/.auth/login/github"
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": ["*.{css,scss,js,png,gif,ico,jpg,svg}"]
+  },
+  "responseOverrides": {
+    "401": {
+      "redirect": "/login",
+      "statusCode": 302
+    }
   },
   "globalHeaders": {
     "etag": "",

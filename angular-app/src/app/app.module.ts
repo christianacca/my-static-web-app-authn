@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { routes } from './router';
 import { AppComponent } from './app.component';
@@ -8,7 +8,7 @@ import { AppStoreModule } from './store/store.module';
 import { AboutComponent } from './about.component';
 import { RouterModule } from '@angular/router';
 import { externalModules } from './build-specific';
-import { declarations } from './core';
+import {BrowserRedirectHttpInterceptor, declarations } from './core';
 
 @NgModule({
   declarations: [AppComponent, AboutComponent, declarations],
@@ -18,6 +18,9 @@ import { declarations } from './core';
     RouterModule.forRoot(routes, { relativeLinkResolution: 'legacy' }),
     AppStoreModule,
     externalModules
+  ],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: BrowserRedirectHttpInterceptor, multi: true },
   ],
   bootstrap: [AppComponent]
 })
