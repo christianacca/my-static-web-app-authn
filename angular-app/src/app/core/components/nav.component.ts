@@ -38,7 +38,7 @@ import { UserInfo } from '../model';
 export class NavComponent implements OnInit {
   userInfo: UserInfo;
   providers = ['twitter', 'github', 'aad'];
-  redirect = window.location.pathname;
+  redirect = '/about';
 
   async ngOnInit() {
     this.userInfo = await this.getUserInfo();

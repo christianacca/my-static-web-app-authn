@@ -9,10 +9,6 @@
       "statusCode": 404
     },
     {
-      "route": "/login",
-      "rewrite": "/.auth/login/github"
-    },
-    {
       "route": "/sw.js",
       "headers": {
         "Cache-Control": "public, max-age=0, must-revalidate"

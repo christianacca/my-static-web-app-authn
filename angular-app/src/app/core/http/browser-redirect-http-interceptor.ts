@@ -16,7 +16,7 @@ export class BrowserRedirectHttpInterceptor implements HttpInterceptor {
             catchError(err => {
                 const redirectUrl = window.location.origin + this.route.url.toString();
                 if (err instanceof HttpErrorResponse && err.url.includes('/login')) {
-                    window.location.href = err.url + `?post_login_redirect_uri=${redirectUrl}`;
+                    window.location.href = window.location.origin + `/.auth/login/github?post_login_redirect_uri=${redirectUrl}`;
                     return EMPTY;
                 }
                 return throwError(err);
