@@ -13,12 +13,6 @@
     "rewrite": "/index.html",
     "exclude": ["*.{css,scss,js,png,gif,ico,jpg,svg}"]
   },
-  "responseOverrides": {
-    "401": {
-      "redirect": "/login",
-      "statusCode": 302
-    }
-  },
   "globalHeaders": {
     "etag": "",
     "Cache-Control": "",

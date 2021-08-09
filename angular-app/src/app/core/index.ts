@@ -1,3 +1,3 @@
 export * from './components';
 export * from './model';
-export * from './http';
+export * from './auth';
