@@ -16,7 +16,7 @@ export class AutoLoginHttpInterceptor implements HttpInterceptor {
         const result$ = next.handle(req).pipe(
             catchError(err => {
                 if (err instanceof HttpErrorResponse && err.status === 401) {
-                    const redirectUrl = window.location.origin + this.route.url.toString();
+                    const redirectUrl = this.route.url.toString();
                     return from(this.authService.login(redirectUrl)).pipe(
                         mergeMapTo(EMPTY) // make typescript happy!
                     );

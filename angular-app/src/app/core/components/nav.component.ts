@@ -21,7 +21,7 @@ import { UserInfo } from '../model';
       <div class="menu-list auth">
         <ng-container *ngIf="!userInfo; else logout">
           <ng-container *ngFor="let provider of providers">
-            <a href="/.auth/login/{{provider}}?post_login_redirect_uri={{redirect}}">{{provider}}</a>
+            <a href="/.auth/login/{{provider.key}}?post_login_redirect_uri={{redirect}}">{{provider.name}}</a>
           </ng-container>
         </ng-container>
         <ng-template #logout>
@@ -38,13 +38,13 @@ import { UserInfo } from '../model';
 })
 export class NavComponent implements OnInit {
   userInfo: UserInfo;
-  providers = ['twitter', 'github', 'aad'];
+  providers = this.authService.availableIdentityProviders;
   redirect = '/about';
   
   constructor(private authService: AuthService) {
   }
 
   async ngOnInit() {
-    this.userInfo = await this.authService.currentUser$.toPromise();
+    this.userInfo = await this.authService.userLoaded$.toPromise();
   }
 }
