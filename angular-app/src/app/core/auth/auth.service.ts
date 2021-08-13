@@ -1,9 +1,9 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {EMPTY, identity, Observable} from "rxjs";
-import { UserInfo } from '../model';
-import {first, map, mergeMapTo, shareReplay, startWith, tap} from "rxjs/operators";
-import { builtInIdentityProviders } from './identity-provider';
+import {Observable} from "rxjs";
+import {UserInfo} from './user-info';
+import {first, map, shareReplay, startWith} from "rxjs/operators";
+import {AuthConfig} from './auth-config';
 
 interface AuthResponseData {
   clientPrincipal?: UserInfo;
@@ -17,7 +17,7 @@ export class AuthService {
   /**
    * The identity providers to list as available to sign-in with 
    */
-  availableIdentityProviders = Object.values(builtInIdentityProviders);
+  availableIdentityProviders = this.config.availableIdentityProviders;
   /**
    * Return the current identity provider (idp) - the idp that was used to successfully authenticate with or
    * the default idp before authentication
@@ -26,7 +26,7 @@ export class AuthService {
   /**
    * The identity provider to sign-in with by default
    */
-  defaultIdentityProvider = 'github';
+  defaultIdentityProviderKey = this.config.defaultIdentityProviderKey;
   /**
    * Return whether the user is authenticated.
    *
@@ -44,14 +44,14 @@ export class AuthService {
    */
   userLoaded$: Observable<UserInfo | undefined>;
   
-  constructor(private httpClient: HttpClient) {
+  constructor(private httpClient: HttpClient, private config: AuthConfig) {
     this.userLoaded$ = this.httpClient.get<AuthResponseData>('/.auth/me').pipe(
         map(resp => resp.clientPrincipal ?? undefined),
         shareReplay({ bufferSize: 1, refCount: false })
     );
     this.currentIdentityProvider$ = this.userLoaded$.pipe(
-        map(user => user?.identityProvider ?? this.defaultIdentityProvider),
-        startWith(this.defaultIdentityProvider),
+        map(user => user?.identityProvider ?? this.defaultIdentityProviderKey),
+        startWith(this.defaultIdentityProviderKey),
         shareReplay({ bufferSize: 1, refCount: false })
     );
     this.isAuthenticated$ = this.userLoaded$.pipe(
