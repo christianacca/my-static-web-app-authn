@@ -8,7 +8,9 @@ import {AppStoreModule} from './store/store.module';
 import {AboutComponent} from './about.component';
 import {RouterModule} from '@angular/router';
 import {externalModules} from './build-specific';
-import {AuthModule, declarations} from './core';
+import {AuthConfig, AuthModule, declarations} from './core';
+
+const auth0Idp = { key: 'auth0', name: 'Auth0'};
 
 @NgModule({
   declarations: [AppComponent, AboutComponent, declarations],
@@ -18,7 +20,13 @@ import {AuthModule, declarations} from './core';
     RouterModule.forRoot(routes, { relativeLinkResolution: 'legacy' }),
     AppStoreModule,
     externalModules,
-    AuthModule
+    AuthModule.forRoot({
+      availableIdentityProviders: [
+          ...AuthConfig.defaults.availableIdentityProviders,
+        auth0Idp
+      ],
+      defaultIdentityProviderKey: auth0Idp.key
+    })
   ],
   bootstrap: [AppComponent]
 })

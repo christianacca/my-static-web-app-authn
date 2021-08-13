@@ -1,6 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { AuthService } from '../auth';
-import { UserInfo } from '../model';
+import {Component, OnInit} from '@angular/core';
+import {AuthService, UserInfo} from '../auth';
 
 @Component({
   selector: 'app-nav',
