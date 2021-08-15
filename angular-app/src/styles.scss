@@ -13,11 +13,6 @@ $shade-light: #fafafa;
 
 @import 'bulma/bulma.sass';
 
-.menu-list .router-link-active {
-  color: #fff;
-  background-color: $link;
-}
-
 .menu.auth {
   margin-top: 3em;
 }

@@ -1,13 +1,36 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {Observable} from "rxjs";
+import {Observable, Subject} from "rxjs";
 import {UserInfo} from './user-info';
-import {first, map, shareReplay, startWith} from "rxjs/operators";
+import {first, map, shareReplay, startWith, tap} from "rxjs/operators";
 import {AuthConfig} from './auth-config';
+import {AuthEvent} from './auth-event';
+import {StorageService} from './storage.service';
 
 interface AuthResponseData {
   clientPrincipal?: UserInfo;
 }
+
+/** 
+ * Options that control the sign-in behaviour
+ */
+export interface SignInOptions {
+  /** 
+   * The identity provider to sign-in with (defaults to `AuthConfig.defaultIdentityProviderKey`)
+   */
+  identityProvider?: string;
+  /** 
+   * The client-side url to redirect to after the user has been authenticated 
+   */
+  redirectUrl?: string;
+  /** 
+   * Is this a sign-up request or no? (defaults to `false`) 
+   */
+  isSignUp?: boolean;
+}
+
+const storageKeyPrefix = 'angular_swa_auth';
+const signingUpFlagKey = `${storageKeyPrefix}_signing_up`;
 
 @Injectable({
   providedIn: 'root'
@@ -44,16 +67,27 @@ export class AuthService {
    */
   userLoaded$: Observable<UserInfo | undefined>;
   
-  constructor(private httpClient: HttpClient, private config: AuthConfig) {
+  protected events = new Subject<AuthEvent>();
+  events$ = this.events.asObservable();
+  
+  constructor(private httpClient: HttpClient, private config: AuthConfig, private storage: StorageService) {
+    
     this.userLoaded$ = this.httpClient.get<AuthResponseData>('/.auth/me').pipe(
-        map(resp => resp.clientPrincipal ?? undefined),
-        shareReplay({ bufferSize: 1, refCount: false })
+      map(resp => resp.clientPrincipal ?? undefined),
+      tap(user => {
+        if (user) {
+          this.publishAuthenticatedSuccessEvents(user);
+        }
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+    
     this.currentIdentityProvider$ = this.userLoaded$.pipe(
-        map(user => user?.identityProvider ?? this.defaultIdentityProviderKey),
-        startWith(this.defaultIdentityProviderKey),
-        shareReplay({ bufferSize: 1, refCount: false })
+      map(user => user?.identityProvider ?? this.defaultIdentityProviderKey),
+      startWith(this.defaultIdentityProviderKey),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+    
     this.isAuthenticated$ = this.userLoaded$.pipe(
         map(user => !!user),
         startWith(false),
@@ -77,29 +111,54 @@ export class AuthService {
       return true;
     }
 
-    await this.login(targetUrl);
+    await this.login({ redirectUrl: targetUrl });
     return false;
   }
 
   /**
-   * Trigger the login flow, redirecting the browser to the current identity provider
-   * @param redirectUrl The client-side url to redirect to after the user has been authenticated
-   * @see `currentIdentityProvider$`
+   * Trigger the login flow, redirecting the browser to the identity provider
+   * @param options The options that control the sign-in behaviour
    */
-  async login(redirectUrl?: string) {
-    const idp = await this.currentIdentityProvider$.pipe(first()).toPromise();
-    await this.loginTo(idp, redirectUrl);
+  async login(options: SignInOptions = {}) {
+    const idp = options.identityProvider ?? await this.currentIdentityProvider$.pipe(first()).toPromise();
+    const redirectUrl = options.redirectUrl ? window.location.origin + options.redirectUrl : undefined;
+    const loginUrl = `${window.location.origin}/.auth/login/${idp}`;
+    window.location.href = redirectUrl ? `${loginUrl}?post_login_redirect_uri=${redirectUrl}` : loginUrl;
+
+    if (options.isSignUp) {
+      this.setSigningUpFlag();
+    }
   }
 
   /**
-   * Trigger the login flow, redirecting the browser to the identity provider
-   * @param identityProvider The identity provider to sign-in with
-   * @param redirectUrl The client-side url to redirect to after the user has been authenticated 
+   * Trigger the logout flow. This is a no-op when the user is not already authenticated
+   * @param redirectUrl The url to redirect to after the user has been logged out
+   * @returns {boolean} false when the user is not already authenticated, true otherwise
    */
-  async loginTo(identityProvider: string, redirectUrl?: string) {
-    const loginBaseUrl = `${window.location.origin}/.auth/login/${identityProvider}`;
-    redirectUrl = redirectUrl ? window.location.origin + redirectUrl : undefined;
-    const loginUrl = redirectUrl ? `${loginBaseUrl}?post_login_redirect_uri=${redirectUrl}` : loginBaseUrl;
-    window.location.href = loginUrl;
+  async logout(redirectUrl?: string): Promise<boolean> {
+    const user = await this.userLoaded$.toPromise();
+    if (!user) { return false; }
+
+    const logoutUrl = `${window.location.origin}/.auth/logout`;
+    window.location.href = redirectUrl ? `${logoutUrl}?post_logout_redirect_uri=${redirectUrl}` : logoutUrl;
+
+    this.events.next(AuthEvent.signOut(user));
+    
+    return true;
+  }
+  
+  protected setSigningUpFlag() {
+    this.storage.setItem(signingUpFlagKey, '1');
+  }
+
+  protected popSigningUpFlag() {
+    return !!this.storage.popItem(signingUpFlagKey)
+  }
+
+  private publishAuthenticatedSuccessEvents(user: UserInfo) {
+    this.events.next(AuthEvent.signIn(user));
+    if (this.popSigningUpFlag()) {
+      this.events.next(AuthEvent.signUp(user));
+    }
   }
 }

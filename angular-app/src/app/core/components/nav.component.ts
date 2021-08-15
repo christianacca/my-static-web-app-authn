@@ -20,11 +20,11 @@ import {AuthService, UserInfo} from '../auth';
       <div class="menu-list auth">
         <ng-container *ngIf="!userInfo; else logout">
           <ng-container *ngFor="let provider of providers">
-            <a href="/.auth/login/{{provider.key}}?post_login_redirect_uri={{redirect}}">{{provider.name}}</a>
+            <a (click)="signIn(provider.key)">{{provider.name}}</a>
           </ng-container>
         </ng-container>
         <ng-template #logout>
-          <a href="/.auth/logout?post_logout_redirect_uri={{redirect}}">Logout</a>
+          <a (click)="signOut()">Logout</a>
         </ng-template>
       </div>
     </nav>
@@ -38,12 +38,21 @@ import {AuthService, UserInfo} from '../auth';
 export class NavComponent implements OnInit {
   userInfo: UserInfo;
   providers = this.authService.availableIdentityProviders;
-  redirect = '/about';
+  
+  private redirectUrl = '/about';
   
   constructor(private authService: AuthService) {
   }
 
   async ngOnInit() {
     this.userInfo = await this.authService.userLoaded$.toPromise();
+  }
+
+  signIn(identityProvider: string) {
+    this.authService.login({ identityProvider, redirectUrl: this.redirectUrl } );
+  }
+
+  signOut() {
+    this.authService.logout(this.redirectUrl);
   }
 }
