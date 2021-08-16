@@ -13,11 +13,11 @@ interface AuthResponseData {
 }
 
 /** 
- * Options that control the sign-in behaviour
+ * Options that control the login behaviour
  */
-export interface SignInOptions {
+export interface LoginOptions {
   /** 
-   * The identity provider to sign-in with.
+   * The identity provider to login with.
    * Defaults to the first entry in `AuthConfig.identityProviders`. This can be customized by
    * registering your own `IdentityProviderSelectorService`
    * @example
@@ -50,7 +50,7 @@ const signingUpFlagKey = `${storageKeyPrefix}_signing_up`;
 export class AuthService {
 
   /**
-   * The identity providers available to sign-in with. 
+   * The identity providers available to login with. 
    * Note: This is just a convenient alias of `AuthConfig.identityProviders`
    */
   readonly identityProviders = this.config.identityProviders;
@@ -123,10 +123,10 @@ export class AuthService {
 
   /**
    * Trigger the login flow, redirecting the browser to the identity provider.
-   * @param options The options that control the sign-in behaviour
-   * @returns {boolean} false when the identity provider to sign in with is not selected, true otherwise
+   * @param options The options that control the login behaviour
+   * @returns {boolean} false when the identity provider to login with is not selected, true otherwise
    */
-  async login(options: SignInOptions = {}) : Promise<boolean> {
+  async login(options: LoginOptions = {}) : Promise<boolean> {
     const idp = options.identityProvider ?? await this.selectIdentityProvider().toPromise();
     
     if (!idp) {
@@ -156,7 +156,7 @@ export class AuthService {
     const idpUrl = `${window.location.origin}/.auth/logout`;
     this.redirectToIdentityProvider(redirectUrl ? `${idpUrl}?post_logout_redirect_uri=${redirectUrl}` : idpUrl);
 
-    this.sessionEvents.next(AuthEvent.signOut(user));
+    this.sessionEvents.next(AuthEvent.logout(user));
     
     return true;
   }
@@ -174,7 +174,7 @@ export class AuthService {
   }
 
   private publishAuthenticatedSuccessEvents(user: UserInfo) {
-    this.sessionEvents.next(AuthEvent.signIn(user));
+    this.sessionEvents.next(AuthEvent.login(user));
     if (this.popSigningUpFlag()) {
       this.sessionEvents.next(AuthEvent.signUp(user));
     }

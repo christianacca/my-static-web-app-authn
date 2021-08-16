@@ -18,13 +18,13 @@ import {AuthService, UserInfo} from '../auth';
     <nav class="menu auth">
       <p class="menu-label">Auth</p>
       <div class="menu-list auth">
-        <ng-container *ngIf="!userInfo; else logout">
+        <ng-container *ngIf="!userInfo; else logoutTpl">
           <ng-container *ngFor="let provider of providers">
-            <a (click)="signIn(provider.key)">{{provider.name}}</a>
+            <a (click)="login(provider.key)">{{provider.name}}</a>
           </ng-container>
         </ng-container>
-        <ng-template #logout>
-          <a (click)="signOut()">Logout</a>
+        <ng-template #logoutTpl>
+          <a (click)="logout()">Logout</a>
         </ng-template>
       </div>
     </nav>
@@ -48,11 +48,11 @@ export class NavComponent implements OnInit {
     this.userInfo = await this.authService.userLoaded$.toPromise();
   }
 
-  signIn(identityProvider: string) {
+  login(identityProvider: string) {
     this.authService.login({ identityProvider, redirectUrl: this.redirectUrl } );
   }
 
-  signOut() {
+  logout() {
     this.authService.logout(this.redirectUrl);
   }
 }

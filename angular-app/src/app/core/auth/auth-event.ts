@@ -1,14 +1,14 @@
 import {UserInfo} from "./user-info";
 
-export type AuthEventType = 'sign-in' | 'sign-up' | 'sign-out'
+export type AuthEventType = 'login' | 'sign-up' | 'logout'
 
 export abstract class AuthEvent {
     type: AuthEventType;
     user: UserInfo;
     
-    static signIn(user: UserInfo): AuthEvent {
+    static login(user: UserInfo): AuthEvent {
         return {
-            type: 'sign-in',
+            type: 'login',
             user
         };
     }
@@ -20,9 +20,9 @@ export abstract class AuthEvent {
         };
     }
     
-    static signOut(user: UserInfo): AuthEvent {
+    static logout(user: UserInfo): AuthEvent {
         return {
-            type: 'sign-out',
+            type: 'logout',
             user
         };
     }

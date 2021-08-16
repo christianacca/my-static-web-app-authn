@@ -7,15 +7,19 @@ import {IdentityProviderSelectorService} from "./identity-provider-selector.serv
 })
 export class AuthConfig {
     /** 
-     * The identity providers available to sign-in with. Defaults to the list of managed idp
+     * The identity providers available to login with. Defaults to the list of managed idp
      * @see {builtInIdentityProviders}
      */
     identityProviders = Object.values(builtInIdentityProviders);
     /** 
-     * The service that will select the identity provider to sign-in with. Defaults to
+     * The service that will select the identity provider to login with. Defaults to
      * a service that will select the first entry from `identityProviders`
      */
     identityProviderSelectorType?: Type<IdentityProviderSelectorService>;
+    /**
+     * Trigger login flow when there is an unauthorized response from the api. Defaults to `true`
+     */
+    loginOnUnauthorizedApiRequests = true;
     /**
      * Api endpoint to send authentication session events 
      */
