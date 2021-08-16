@@ -9,6 +9,7 @@ import {AppStoreModule} from './store/store.module';
 import {AboutComponent} from './about.component';
 import {externalModules} from './build-specific';
 import {AuthModule, declarations} from './core';
+import {IdentityProviderPromptService} from './identity-provider-prompt.service';
 
 @NgModule({
   declarations: [AppComponent, AboutComponent, declarations],
@@ -18,7 +19,10 @@ import {AuthModule, declarations} from './core';
     RouterModule.forRoot(routes, { relativeLinkResolution: 'legacy' }),
     AppStoreModule,
     externalModules,
-    AuthModule.forRoot()
+    AuthModule.forRoot({ 
+      identityProviderSelectorType: IdentityProviderPromptService,
+      sendSessionEventsToApi: true
+    })
   ],
   bootstrap: [AppComponent]
 })

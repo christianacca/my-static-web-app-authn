@@ -15,7 +15,7 @@ export class AuthEventPersistenceService implements OnDestroy {
 
   constructor(authService: AuthService, errorHandler: ErrorHandler, private config: AuthConfig) {
 
-    this.saves$ = authService.events$.pipe(
+    this.saves$ = authService.sessionEvents$.pipe(
       concatMap(evt => this.sendEvent(evt).pipe(
         catchError(err => {
           errorHandler.handleError(err);
@@ -35,7 +35,7 @@ export class AuthEventPersistenceService implements OnDestroy {
   protected sendEvent(evt: AuthEvent) : Observable<any> {
     const payload = this.prepareEventPayload(evt);
     // `sendBeacon` is a more reliable way of ensuring the http request is made even when app page is unloaded
-    navigator.sendBeacon(this.config.eventsApiUrl, JSON.stringify(payload));
+    navigator.sendBeacon(this.config.sessionEventsApiUrl, JSON.stringify(payload));
     return EMPTY;
   }
   

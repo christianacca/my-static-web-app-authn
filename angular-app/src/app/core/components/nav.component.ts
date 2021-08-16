@@ -37,7 +37,7 @@ import {AuthService, UserInfo} from '../auth';
 })
 export class NavComponent implements OnInit {
   userInfo: UserInfo;
-  providers = this.authService.availableIdentityProviders;
+  providers = this.authService.identityProviders;
   
   private redirectUrl = '/about';
   

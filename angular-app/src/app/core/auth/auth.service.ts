@@ -1,11 +1,12 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {Observable, Subject} from "rxjs";
+import {Observable, of, Subject} from "rxjs";
 import {UserInfo} from './user-info';
-import {first, map, shareReplay, startWith, tap} from "rxjs/operators";
+import {first, map, mergeMap, shareReplay, tap} from "rxjs/operators";
 import {AuthConfig} from './auth-config';
 import {AuthEvent} from './auth-event';
 import {StorageService} from './storage.service';
+import {IdentityProviderSelectorService} from './identity-provider-selector.service';
 
 interface AuthResponseData {
   clientPrincipal?: UserInfo;
@@ -16,7 +17,18 @@ interface AuthResponseData {
  */
 export interface SignInOptions {
   /** 
-   * The identity provider to sign-in with (defaults to `AuthConfig.defaultIdentityProviderKey`)
+   * The identity provider to sign-in with.
+   * Defaults to the first entry in `AuthConfig.identityProviders`. This can be customized by
+   * registering your own `IdentityProviderSelectorService`
+   * @example
+   * ```ts
+   * // app.module...
+   * imports: [
+   *   AuthModule.forRoot({ 
+   *     identityProviderSelectorType: YourIdentityProviderSelectorService
+   *   })
+   * ]
+   * ```
    */
   identityProvider?: string;
   /** 
@@ -38,18 +50,17 @@ const signingUpFlagKey = `${storageKeyPrefix}_signing_up`;
 export class AuthService {
 
   /**
-   * The identity providers to list as available to sign-in with 
+   * The identity providers available to sign-in with. 
+   * Note: This is just a convenient alias of `AuthConfig.identityProviders`
    */
-  availableIdentityProviders = this.config.availableIdentityProviders;
+  readonly identityProviders = this.config.identityProviders;
+  
+  protected sessionEvents = new Subject<AuthEvent>();
   /**
-   * Return the current identity provider (idp) - the idp that was used to successfully authenticate with or
-   * the default idp before authentication
+   * Authentication session events as they occur
    */
-  currentIdentityProvider$: Observable<string>;
-  /**
-   * The identity provider to sign-in with by default
-   */
-  defaultIdentityProviderKey = this.config.defaultIdentityProviderKey;
+  sessionEvents$ = this.sessionEvents.asObservable();
+  
   /**
    * Return whether the user is authenticated.
    *
@@ -58,6 +69,7 @@ export class AuthService {
    *
    */
   isAuthenticated$: Observable<boolean>;
+  
   /**
    * An event that will emit user details is fetched from the api. The value emitted will
    * be undefined when the user is not authenticated
@@ -67,10 +79,11 @@ export class AuthService {
    */
   userLoaded$: Observable<UserInfo | undefined>;
   
-  protected events = new Subject<AuthEvent>();
-  events$ = this.events.asObservable();
-  
-  constructor(private httpClient: HttpClient, private config: AuthConfig, private storage: StorageService) {
+  constructor(
+    private httpClient: HttpClient, 
+    private config: AuthConfig, 
+    private storage: StorageService, 
+    private idpSelectorService: IdentityProviderSelectorService) {
     
     this.userLoaded$ = this.httpClient.get<AuthResponseData>('/.auth/me').pipe(
       map(resp => resp.clientPrincipal ?? undefined),
@@ -81,17 +94,10 @@ export class AuthService {
       }),
       shareReplay({ bufferSize: 1, refCount: false })
     );
-    
-    this.currentIdentityProvider$ = this.userLoaded$.pipe(
-      map(user => user?.identityProvider ?? this.defaultIdentityProviderKey),
-      startWith(this.defaultIdentityProviderKey),
-      shareReplay({ bufferSize: 1, refCount: false })
-    );
-    
+
     this.isAuthenticated$ = this.userLoaded$.pipe(
-        map(user => !!user),
-        startWith(false),
-        shareReplay({ bufferSize: 1, refCount: false })
+      map(user => !!user),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
   }
 
@@ -116,18 +122,26 @@ export class AuthService {
   }
 
   /**
-   * Trigger the login flow, redirecting the browser to the identity provider
+   * Trigger the login flow, redirecting the browser to the identity provider.
    * @param options The options that control the sign-in behaviour
+   * @returns {boolean} false when the identity provider to sign in with is not selected, true otherwise
    */
-  async login(options: SignInOptions = {}) {
-    const idp = options.identityProvider ?? await this.currentIdentityProvider$.pipe(first()).toPromise();
+  async login(options: SignInOptions = {}) : Promise<boolean> {
+    const idp = options.identityProvider ?? await this.selectIdentityProvider().toPromise();
+    
+    if (!idp) {
+      return false;
+    }
+    
     const redirectUrl = options.redirectUrl ? window.location.origin + options.redirectUrl : undefined;
-    const loginUrl = `${window.location.origin}/.auth/login/${idp}`;
-    window.location.href = redirectUrl ? `${loginUrl}?post_login_redirect_uri=${redirectUrl}` : loginUrl;
+    const idpUrl = `${window.location.origin}/.auth/login/${idp}`;
+    this.redirectToIdentityProvider(redirectUrl ? `${idpUrl}?post_login_redirect_uri=${redirectUrl}` : idpUrl);
 
     if (options.isSignUp) {
       this.setSigningUpFlag();
     }
+    
+    return true;
   }
 
   /**
@@ -139,14 +153,18 @@ export class AuthService {
     const user = await this.userLoaded$.toPromise();
     if (!user) { return false; }
 
-    const logoutUrl = `${window.location.origin}/.auth/logout`;
-    window.location.href = redirectUrl ? `${logoutUrl}?post_logout_redirect_uri=${redirectUrl}` : logoutUrl;
+    const idpUrl = `${window.location.origin}/.auth/logout`;
+    this.redirectToIdentityProvider(redirectUrl ? `${idpUrl}?post_logout_redirect_uri=${redirectUrl}` : idpUrl);
 
-    this.events.next(AuthEvent.signOut(user));
+    this.sessionEvents.next(AuthEvent.signOut(user));
     
     return true;
   }
-  
+
+  protected redirectToIdentityProvider(url: string) {
+    window.location.href = url;
+  }
+
   protected setSigningUpFlag() {
     this.storage.setItem(signingUpFlagKey, '1');
   }
@@ -156,9 +174,16 @@ export class AuthService {
   }
 
   private publishAuthenticatedSuccessEvents(user: UserInfo) {
-    this.events.next(AuthEvent.signIn(user));
+    this.sessionEvents.next(AuthEvent.signIn(user));
     if (this.popSigningUpFlag()) {
-      this.events.next(AuthEvent.signUp(user));
+      this.sessionEvents.next(AuthEvent.signUp(user));
     }
+  }
+  
+  private selectIdentityProvider(): Observable<string | undefined> {
+    const currentIdp$ = this.userLoaded$.pipe(map(user => user?.identityProvider));
+    return currentIdp$.pipe(
+      mergeMap(idp => idp ? of(idp) : this.idpSelectorService.selectIdentityProvider())
+    );
   }
 }
