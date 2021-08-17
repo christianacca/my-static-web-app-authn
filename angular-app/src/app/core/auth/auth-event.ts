@@ -12,14 +12,7 @@ export abstract class AuthEvent {
             user
         };
     }
-    
-    static signUp(user: ClientPrincipal): AuthEvent {
-        return {
-            type: 'sign-up',
-            user
-        };
-    }
-    
+
     static logout(user: ClientPrincipal): AuthEvent {
         return {
             type: 'logout',
@@ -30,6 +23,13 @@ export abstract class AuthEvent {
     static purge(user: ClientPrincipal): AuthEvent {
         return {
             type: 'purge',
+            user
+        };
+    }
+
+    static signUp(user: ClientPrincipal): AuthEvent {
+        return {
+            type: 'sign-up',
             user
         };
     }
