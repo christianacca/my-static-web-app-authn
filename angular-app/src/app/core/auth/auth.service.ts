@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Observable, of, Subject} from "rxjs";
-import {UserInfo} from './user-info';
+import {ClientPrincipal} from './client-principal';
 import {first, map, mergeMap, shareReplay, tap} from "rxjs/operators";
 import {AuthConfig} from './auth-config';
 import {AuthEvent} from './auth-event';
@@ -9,7 +9,7 @@ import {StorageService} from './storage.service';
 import {IdentityProviderSelectorService} from './identity-provider-selector.service';
 
 interface AuthResponseData {
-  clientPrincipal?: UserInfo;
+  clientPrincipal: ClientPrincipal | null;
 }
 
 /** 
@@ -77,7 +77,7 @@ export class AuthService {
    * Late subscribers will receive the last value emitted.
    *
    */
-  userLoaded$: Observable<UserInfo | undefined>;
+  userLoaded$: Observable<ClientPrincipal | null>;
   
   constructor(
     private httpClient: HttpClient, 
@@ -86,7 +86,7 @@ export class AuthService {
     private idpSelectorService: IdentityProviderSelectorService) {
     
     this.userLoaded$ = this.httpClient.get<AuthResponseData>('/.auth/me').pipe(
-      map(resp => resp.clientPrincipal ?? undefined),
+      map(resp => resp.clientPrincipal),
       tap(user => {
         if (user) {
           this.publishAuthenticatedSuccessEvents(user);
@@ -173,7 +173,7 @@ export class AuthService {
     return !!this.storage.popItem(signingUpFlagKey)
   }
 
-  private publishAuthenticatedSuccessEvents(user: UserInfo) {
+  private publishAuthenticatedSuccessEvents(user: ClientPrincipal) {
     this.sessionEvents.next(AuthEvent.login(user));
     if (this.popSigningUpFlag()) {
       this.sessionEvents.next(AuthEvent.signUp(user));

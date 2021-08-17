@@ -1,4 +1,4 @@
-import {builtInIdentityProviders, IdentityProvider} from './identity-provider';
+import {IdentityProviderInfo, managedIdentityProviders} from './identity-provider';
 import {Injectable, Type} from "@angular/core";
 import {IdentityProviderSelectorService} from "./identity-provider-selector.service";
 
@@ -8,9 +8,9 @@ import {IdentityProviderSelectorService} from "./identity-provider-selector.serv
 export class AuthConfig {
     /** 
      * The identity providers available to login with. Defaults to the list of managed idp
-     * @see {builtInIdentityProviders}
+     * @see {managedIdentityProviders}
      */
-    identityProviders = Object.values(builtInIdentityProviders);
+    identityProviders: IdentityProviderInfo[] = Object.values(managedIdentityProviders);
     /** 
      * The service that will select the identity provider to login with. Defaults to
      * a service that will select the first entry from `identityProviders`

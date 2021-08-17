@@ -10,6 +10,6 @@ export class IdentityProviderPromptService implements IdentityProviderSelectorSe
   selectIdentityProvider(): Observable<string | undefined> {
     const idp = this.config.identityProviders[0];
     const ok = idp && confirm(`Sign-in with ${idp.name}`);
-    return of(ok ? idp.key : undefined);
+    return of(ok ? idp.id : undefined);
   }
 }

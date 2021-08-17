@@ -4,6 +4,9 @@ import {catchError, concatMap} from 'rxjs/operators';
 import {EMPTY, Observable, Subscription} from "rxjs";
 import {AuthEvent} from './auth-event';
 import {AuthConfig} from './auth-config';
+import {ClientPrincipal} from './client-principal';
+
+type AuthEventPayload = Pick<AuthEvent, 'type'> & Pick<ClientPrincipal, 'userId' | 'identityProvider'>;
 
 @Injectable({
   providedIn: 'root'
@@ -32,7 +35,7 @@ export class AuthEventPersistenceService implements OnDestroy {
   /** 
    * Send the event to the api. The default implementation is send event using the `navigator.sendBeacon`
    */
-  protected sendEvent(evt: AuthEvent) : Observable<any> {
+  protected sendEvent(evt: AuthEvent) : Observable<void> {
     const payload = this.prepareEventPayload(evt);
     // `sendBeacon` is a more reliable way of ensuring the http request is made even when app page is unloaded
     navigator.sendBeacon(this.config.sessionEventsApiUrl, JSON.stringify(payload));
@@ -40,10 +43,15 @@ export class AuthEventPersistenceService implements OnDestroy {
   }
   
   /**
-   * Override this method if you need to prepare the modify the data sent to the api
+   * Override this method if you need to prepare the modify the data sent to the api. 
+   * 
+   * By default the `userId` and `identityProvider` fields to represent the user be sent be sent for GDPR/PII reasons.
+   * Note: the cookie containing all the `ClientPrincipal` fields will be available also
+   * 
    */
-  protected prepareEventPayload(evt: AuthEvent): any {
-    return evt;
+  protected prepareEventPayload(evt: AuthEvent): AuthEventPayload {
+    const { user: { userId, identityProvider}, type } = evt;
+    return {userId, identityProvider, type };
   }
 
   ngOnDestroy(): void {

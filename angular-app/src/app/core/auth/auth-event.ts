@@ -1,26 +1,26 @@
-import {UserInfo} from "./user-info";
+import {ClientPrincipal} from './client-principal';
 
 export type AuthEventType = 'login' | 'sign-up' | 'logout'
 
 export abstract class AuthEvent {
     type: AuthEventType;
-    user: UserInfo;
+    user: ClientPrincipal;
     
-    static login(user: UserInfo): AuthEvent {
+    static login(user: ClientPrincipal): AuthEvent {
         return {
             type: 'login',
             user
         };
     }
     
-    static signUp(user: UserInfo): AuthEvent {
+    static signUp(user: ClientPrincipal): AuthEvent {
         return {
             type: 'sign-up',
             user
         };
     }
     
-    static logout(user: UserInfo): AuthEvent {
+    static logout(user: ClientPrincipal): AuthEvent {
         return {
             type: 'logout',
             user
