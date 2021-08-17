@@ -12,6 +12,13 @@ interface AuthResponseData {
   clientPrincipal: ClientPrincipal | null;
 }
 
+export interface PurgeOptions {
+  /** 
+   * Purge the data for all applications (defaults to just this application)?
+   */
+  globally?: boolean;
+}
+
 /** 
  * Options that control the login behaviour
  */
@@ -79,6 +86,8 @@ export class AuthService {
    */
   userLoaded$: Observable<ClientPrincipal | null>;
   
+  private currentIdp$: Observable<string | undefined>;
+  
   constructor(
     private httpClient: HttpClient, 
     private config: AuthConfig, 
@@ -99,6 +108,8 @@ export class AuthService {
       map(user => !!user),
       shareReplay({ bufferSize: 1, refCount: false })
     );
+    
+    this.currentIdp$ = this.userLoaded$.pipe(map(user => user?.identityProvider));
   }
 
   /**
@@ -160,6 +171,24 @@ export class AuthService {
     
     return true;
   }
+  
+  /**
+   * Purge user consent information stored at the identity provider for the currently authenticated user.
+   * IMPORTANT: this will redirect the browser, landing back at the base url for the application
+   * @param options The options that control the purge behaviour
+   * @returns {boolean} false when the user is authenticated, true otherwise
+   */
+  async purge(options: PurgeOptions = {}): Promise<boolean> {
+    const user = await this.userLoaded$.toPromise();
+    if (!user) { return false; }
+    
+    const host = options.globally ? 'identity.azurestaticapps.net' : window.location.origin;
+    this.redirectToIdentityProvider(`${host}/.auth/purge/${user.identityProvider}`);
+
+    this.sessionEvents.next(AuthEvent.purge(user));
+
+    return true;
+  }
 
   protected redirectToIdentityProvider(url: string) {
     window.location.href = url;
@@ -181,8 +210,7 @@ export class AuthService {
   }
   
   private selectIdentityProvider(): Observable<string | undefined> {
-    const currentIdp$ = this.userLoaded$.pipe(map(user => user?.identityProvider));
-    return currentIdp$.pipe(
+    return this.currentIdp$.pipe(
       mergeMap(idp => idp ? of(idp) : this.idpSelectorService.selectIdentityProvider())
     );
   }

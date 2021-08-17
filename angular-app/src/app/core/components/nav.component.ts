@@ -25,6 +25,7 @@ import {AuthService, ClientPrincipal} from '../auth';
               </ng-container>
               <ng-template #logoutTpl>
                   <a (click)="logout()">Logout</a>
+                  <a (click)="purge()">Forget me</a>
               </ng-template>
           </div>
       </nav>
@@ -54,5 +55,9 @@ export class NavComponent implements OnInit {
 
   logout() {
     this.authService.logout(this.redirectUrl);
+  }
+
+  purge() {
+    this.authService.purge();
   }
 }

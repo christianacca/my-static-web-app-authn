@@ -1,6 +1,6 @@
 import {ClientPrincipal} from './client-principal';
 
-export type AuthEventType = 'login' | 'sign-up' | 'logout'
+export type AuthEventType = 'login' | 'sign-up' | 'logout' | 'purge';
 
 export abstract class AuthEvent {
     type: AuthEventType;
@@ -23,6 +23,13 @@ export abstract class AuthEvent {
     static logout(user: ClientPrincipal): AuthEvent {
         return {
             type: 'logout',
+            user
+        };
+    }
+    
+    static purge(user: ClientPrincipal): AuthEvent {
+        return {
+            type: 'purge',
             user
         };
     }

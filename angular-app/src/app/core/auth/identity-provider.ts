@@ -11,9 +11,9 @@ export interface IdentityProviderInfo<T extends ManagedIdentityProvider | string
 }
 
 export const managedIdentityProviders: Record<ManagedIdentityProvider, IdentityProviderInfo<ManagedIdentityProvider>> = {
-    aad: {id: 'aad', name: 'Azure AD'},
     github: {id: 'github', name: 'GitHub'},
     google: {id: 'google', name: 'Google'},
-    facebook: {id: 'facebook', name: 'Facebook'},
-    twitter: {id: 'twitter', name: 'Twitter'}
+    twitter: {id: 'twitter', name: 'Twitter'},
+    aad: {id: 'aad', name: 'Azure AD'},
+    facebook: {id: 'facebook', name: 'Facebook'}
 };
