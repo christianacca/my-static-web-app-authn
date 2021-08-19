@@ -13,6 +13,10 @@
       "rewrite": "/.auth/login/github"
     },
     {
+      "route": "/logged-out",
+      "rewrite": "/assets/logged-out.html"
+    },
+    {
       "route": "/sw.js",
       "headers": {
         "Cache-Control": "public, max-age=0, must-revalidate"
