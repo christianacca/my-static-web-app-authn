@@ -40,8 +40,6 @@ export class NavComponent implements OnInit {
   userInfo: ClientPrincipal;
   providers = this.authService.identityProviders;
   
-  private redirectUrl = '/about';
-  
   constructor(private authService: AuthService) {
   }
 
@@ -50,11 +48,11 @@ export class NavComponent implements OnInit {
   }
 
   login(identityProvider: string) {
-    this.authService.login({ identityProvider, redirectUrl: this.redirectUrl } );
+    this.authService.login({ identityProvider, redirectUrl: '/about' } );
   }
 
   logout() {
-    this.authService.logout(this.redirectUrl);
+    this.authService.logout('/logged-out');
   }
 
   purge() {
