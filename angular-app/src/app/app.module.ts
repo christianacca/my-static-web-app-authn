@@ -8,8 +8,8 @@ import {AppComponent} from './app.component';
 import {AppStoreModule} from './store/store.module';
 import {AboutComponent} from './about.component';
 import {externalModules} from './build-specific';
-import {AuthModule, declarations} from './core';
-import {IdentityProviderPromptService} from './identity-provider-prompt.service';
+import {declarations} from './core';
+import {SwaAuthModule} from '@christianacca/angular-swa-auth';
 
 @NgModule({
   declarations: [AppComponent, AboutComponent, declarations],
@@ -19,8 +19,7 @@ import {IdentityProviderPromptService} from './identity-provider-prompt.service'
     RouterModule.forRoot(routes, { relativeLinkResolution: 'legacy' }),
     AppStoreModule,
     externalModules,
-    AuthModule.forRoot({ 
-      identityProviderSelectorType: IdentityProviderPromptService,
+    SwaAuthModule.forRoot({
       sendSessionEventsToApi: true
     })
   ],

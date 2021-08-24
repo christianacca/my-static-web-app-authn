@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {AuthService, ClientPrincipal} from '../auth';
+import {AuthService, ClientPrincipal} from '@christianacca/angular-swa-auth';
 
 @Component({
   selector: 'app-nav',
